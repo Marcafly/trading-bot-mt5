@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Bot de Trading MT5</title>
+    <title>Bot Trading Auto</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * {
@@ -10,193 +10,131 @@
             box-sizing: border-box;
         }
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-        }
-        .container {
-            background: white;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 28px;
-        }
-        .status-container {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            border-left: 5px solid #dc3545;
-            transition: all 0.3s ease;
-        }
-        .status.connected {
-            border-left-color: #28a745;
-        }
-        .status.running {
-            border-left-color: #17a2b8;
-        }
-        .status.running.connected {
-            border-left-color: #ffc107;
-            background: #fff3cd;
-        }
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        @media (max-width: 600px) {
-            .controls {
-                grid-template-columns: 1fr;
-            }
-        }
-        .btn {
-            padding: 15px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
         }
-        .btn:active {
-            transform: scale(0.98);
+        .container {
+            background: white;
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
         }
-        .connect { 
-            background: #007bff; 
-            color: white; 
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
         }
-        .connect:hover { background: #0056b3; }
-        .start { 
-            background: #28a745; 
-            color: white; 
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
         }
-        .start:hover { background: #1e7e34; }
-        .stop { 
-            background: #dc3545; 
-            color: white; 
+        .main-button {
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
         }
-        .stop:hover { background: #c82333; }
-        .btn:disabled {
+        .main-button:active {
+            transform: scale(0.95);
+        }
+        .main-button.stop {
+            background: linear-gradient(135deg, #dc3545, #e83e8c);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.4);
+        }
+        .main-button:disabled {
             background: #6c757d;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
+        }
+        .status-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 5px solid #dc3545;
+            font-weight: bold;
+            color: #333;
+        }
+        .status-box.active {
+            border-left-color: #28a745;
+            background: #d4edda;
         }
         .stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 20px 0;
         }
         .stat-card {
             background: #e9ecef;
             padding: 15px;
-            border-radius: 8px;
+            border-radius: 10px;
             text-align: center;
         }
         .stat-value {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             color: #333;
         }
+        .profit { color: #28a745; }
+        .loss { color: #dc3545; }
         .stat-label {
             font-size: 12px;
             color: #666;
             margin-top: 5px;
         }
-        .profit { color: #28a745; }
-        .loss { color: #dc3545; }
         .logs {
             background: #1a1a1a;
             color: #00ff00;
-            padding: 20px;
-            border-radius: 8px;
-            height: 300px;
+            padding: 15px;
+            border-radius: 10px;
+            height: 200px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
-            font-size: 14px;
+            font-size: 12px;
+            text-align: left;
             margin-top: 20px;
-            border: 1px solid #333;
+            border: 2px solid #333;
         }
         .log-entry {
             margin-bottom: 8px;
-            line-height: 1.4;
-            padding: 5px;
-            border-radius: 3px;
-        }
-        .log-entry:hover {
-            background: #2a2a2a;
+            line-height: 1.3;
         }
         .timestamp {
             color: #888;
-        }
-        .success { color: #00ff00; }
-        .error { color: #ff4444; }
-        .warning { color: #ffaa00; }
-        .info { color: #4488ff; }
-        .trade { color: #ff88ff; }
-        .system { color: #88ffff; }
-        .symbol-selector {
-            margin-bottom: 20px;
-        }
-        .symbol-selector select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e9ecef;
-            border-radius: 8px;
-            font-size: 16px;
-            background: white;
-        }
-        .performance {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .performance h3 {
-            margin-bottom: 10px;
-            font-size: 18px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Bot de Trading MT5 - SIMULACIÓN</h1>
+        <h1>🤖 BOT TRADING AUTO</h1>
+        <div class="subtitle">1 BOTÓN • TODO AUTOMÁTICO • 0 CONFIGURACIÓN</div>
         
-        <div class="performance">
-            <h3>🚀 Modo Simulación Activo</h3>
-            <p>Este bot funciona con datos simulados. Perfecto para testing y desarrollo.</p>
+        <div id="statusBox" class="status-box">
+            🔴 BOT INACTIVO
         </div>
         
-        <div class="symbol-selector">
-            <label for="symbolSelect"><strong>Seleccionar Par de Trading:</strong></label>
-            <select id="symbolSelect" onchange="changeSymbol()">
-                <option value="EURUSD">EUR/USD</option>
-                <option value="GBPUSD">GBP/USD</option>
-                <option value="USDJPY">USD/JPY</option>
-                <option value="XAUUSD">Gold (XAU/USD)</option>
-            </select>
-        </div>
-        
-        <div id="status" class="status-container status">
-            <strong>Estado del Sistema:</strong><br>
-            🔴 Desconectado de MT5<br>
-            ⏹️ Bot detenido
-        </div>
+        <button class="main-button" onclick="toggleBot()" id="mainButton">
+            🚀 ACTIVAR BOT AUTO
+        </button>
         
         <div class="stats">
             <div class="stat-card">
@@ -205,218 +143,146 @@
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="profitValue">$0.00</div>
-                <div class="stat-label">GANANCIAS/PÉRDIDAS</div>
+                <div class="stat-label">GANANCIAS</div>
             </div>
             <div class="stat-card">
                 <div class="stat-value" id="ordersValue">0</div>
-                <div class="stat-label">ÓRDENES ACTIVAS</div>
+                <div class="stat-label">ÓRDENES</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="symbolValue">EURUSD</div>
-                <div class="stat-label">PAR ACTUAL</div>
+                <div class="stat-value">EURUSD</div>
+                <div class="stat-label">PAR</div>
             </div>
-        </div>
-        
-        <div class="controls">
-            <button class="btn connect" onclick="connectMT5()" id="connectBtn">
-                🔗 Conectar MT5
-            </button>
-            <button class="btn start" onclick="startBot()" id="startBtn" disabled>
-                ▶️ Iniciar Bot
-            </button>
-            <button class="btn stop" onclick="stopBot()" id="stopBtn" disabled>
-                ⏹️ Detener Bot
-            </button>
         </div>
         
         <div class="logs" id="logs">
-            <div class="log-entry system">
-                <span class="timestamp">[Sistema]</span> Aplicación iniciada. Modo simulación activo.
-            </div>
-            <div class="log-entry info">
-                <span class="timestamp">[Info]</span> Conecta a MT5 simulado para comenzar.
+            <div class="log-entry">
+                <span class="timestamp">[SISTEMA]</span> Listo. Click en ACTIVAR BOT.
             </div>
         </div>
     </div>
 
     <script>
-        let currentSymbol = 'EURUSD';
+        let botActive = false;
 
-        function connectMT5() {
-            const btn = document.getElementById('connectBtn');
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Conectando...';
+        function toggleBot() {
+            const button = document.getElementById('mainButton');
+            button.disabled = true;
             
-            fetch('/connect', { method: 'POST' })
-            .then(response => response.json())
+            if (!botActive) {
+                button.textContent = '⏳ ACTIVANDO...';
+                addLog('Iniciando bot automático...');
+            } else {
+                button.textContent = '⏳ DETENIENDO...';
+                addLog('Deteniendo bot...');
+            }
+
+            fetch('/toggle_bot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error del servidor');
+                }
+                return response.json();
+            })
             .then(data => {
-                addLog(data.message, data.status);
-                updateStatus();
-                btn.disabled = false;
-                btn.innerHTML = '🔗 Conectar MT5';
-                
-                if (data.status === 'success') {
-                    document.getElementById('startBtn').disabled = false;
-                    addLog('✅ Conexión establecida con MT5 Simulado', 'success');
-                    addLog('📊 Datos de mercado simulados activos', 'info');
+                if (data.success) {
+                    botActive = data.bot_active;
+                    
+                    if (botActive) {
+                        button.textContent = '🛑 DETENER BOT';
+                        button.className = 'main-button stop';
+                        updateStatus('🟢 BOT ACTIVO - Operando en EURUSD', true);
+                        addLog('✅ Bot activado - Conectado e iniciado');
+                        addLog('💰 Ejecutando operaciones automáticas...');
+                    } else {
+                        button.textContent = '🚀 ACTIVAR BOT AUTO';
+                        button.className = 'main-button';
+                        updateStatus('🔴 BOT INACTIVO', false);
+                        addLog('🛑 Bot detenido');
+                    }
+                    
+                    updateStats(data);
+                } else {
+                    throw new Error(data.message);
                 }
             })
             .catch(error => {
-                addLog('❌ Error de conexión: ' + error, 'error');
-                btn.disabled = false;
-                btn.innerHTML = '🔗 Conectar MT5';
+                addLog('❌ Error: ' + error.message);
+                button.textContent = botActive ? '🛑 DETENER BOT' : '🚀 ACTIVAR BOT AUTO';
+            })
+            .finally(() => {
+                button.disabled = false;
             });
         }
 
-        function startBot() {
-            const btn = document.getElementById('startBtn');
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Iniciando...';
+        function updateStatus(message, isActive) {
+            const statusBox = document.getElementById('statusBox');
+            statusBox.textContent = message;
+            statusBox.className = isActive ? 'status-box active' : 'status-box';
+        }
+
+        function updateStats(data) {
+            document.getElementById('balanceValue').textContent = '$' + data.balance.toFixed(2);
             
-            fetch('/start', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                addLog(data.message, data.status);
-                updateStatus();
-                
-                if (data.status === 'success') {
-                    document.getElementById('stopBtn').disabled = false;
-                    addLog('🤖 Estrategia de trading activada', 'success');
-                    addLog('📈 Analizando mercado en tiempo real...', 'info');
-                } else {
-                    btn.disabled = false;
-                    btn.innerHTML = '▶️ Iniciar Bot';
-                }
-            })
-            .catch(error => {
-                addLog('❌ Error al iniciar: ' + error, 'error');
-                btn.disabled = false;
-                btn.innerHTML = '▶️ Iniciar Bot';
-            });
-        }
-
-        function stopBot() {
-            const btn = document.getElementById('stopBtn');
-            btn.disabled = true;
-            btn.innerHTML = '⏳ Deteniendo...';
+            const profitElement = document.getElementById('profitValue');
+            profitElement.textContent = '$' + data.profit.toFixed(2);
+            profitElement.className = 'stat-value ' + (data.profit >= 0 ? 'profit' : 'loss');
             
-            fetch('/stop', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                addLog(data.message, data.status);
-                updateStatus();
-                document.getElementById('startBtn').disabled = false;
-                btn.innerHTML = '⏹️ Detener Bot';
-                addLog('🛑 Estrategia detenida', 'warning');
-            })
-            .catch(error => {
-                addLog('❌ Error al detener: ' + error, 'error');
-                btn.disabled = false;
-                btn.innerHTML = '⏹️ Detener Bot';
-            });
+            document.getElementById('ordersValue').textContent = data.orders;
         }
 
-        function changeSymbol() {
-            const select = document.getElementById('symbolSelect');
-            currentSymbol = select.value;
-            document.getElementById('symbolValue').textContent = currentSymbol;
-            addLog(`🔁 Cambiando a par: ${currentSymbol}`, 'info');
-        }
-
-        function updateStatus() {
-            fetch('/status')
-            .then(response => response.json())
-            .then(data => {
-                const statusDiv = document.getElementById('status');
-                let statusHTML = `<strong>Estado del Sistema:</strong><br>`;
-                
-                if (data.connected) {
-                    statusHTML += `✅ Conectado a MT5 Simulado<br>`;
-                    statusHTML += `📊 Símbolo: ${data.symbol}<br>`;
-                    statusHTML += `🔄 Órdenes ejecutadas: ${data.orders_count}`;
-                } else {
-                    statusHTML += `🔴 Desconectado de MT5<br>`;
-                    statusHTML += `💡 Usando datos simulados`;
-                }
-                
-                if (data.running) {
-                    statusHTML += `<br>🟢 Bot ejecutándose - Modo Simulación`;
-                } else {
-                    statusHTML += `<br>⏹️ Bot detenido`;
-                }
-                
-                statusDiv.innerHTML = statusHTML;
-                
-                // Actualizar clases CSS
-                statusDiv.className = 'status-container status';
-                if (data.connected) statusDiv.classList.add('connected');
-                if (data.running) statusDiv.classList.add('running');
-                
-                // Actualizar estadísticas
-                document.getElementById('balanceValue').textContent = `$${data.balance.toFixed(2)}`;
-                document.getElementById('profitValue').textContent = `$${data.total_profit.toFixed(2)}`;
-                document.getElementById('profitValue').className = `stat-value ${data.total_profit >= 0 ? 'profit' : 'loss'}`;
-                document.getElementById('ordersValue').textContent = data.orders_count;
-                document.getElementById('symbolValue').textContent = data.symbol;
-            })
-            .catch(error => {
-                console.error('Error actualizando estado:', error);
-            });
-        }
-
-        function addLog(message, type = 'info') {
+        function addLog(message) {
             const logs = document.getElementById('logs');
             const timestamp = new Date().toLocaleTimeString();
             const logEntry = document.createElement('div');
-            
-            // Asignar clase según el tipo de mensaje
-            let logClass = 'log-entry ';
-            if (type === 'success') logClass += 'success';
-            else if (type === 'error') logClass += 'error';
-            else if (type === 'warning') logClass += 'warning';
-            else if (type === 'trade') logClass += 'trade';
-            else if (type === 'system') logClass += 'system';
-            else logClass += 'info';
-            
-            logEntry.className = logClass;
+            logEntry.className = 'log-entry';
             logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
             
             logs.appendChild(logEntry);
             logs.scrollTop = logs.scrollHeight;
             
-            // Limitar logs a 100 entradas para evitar sobrecarga
-            if (logs.children.length > 100) {
+            // Limitar logs a 15 entradas máximo
+            if (logs.children.length > 15) {
                 logs.removeChild(logs.firstChild);
             }
         }
 
-        // Simular actividad del mercado
-        function simulateMarketActivity() {
-            if (Math.random() > 0.7) {
-                const activities = [
-                    '📊 Mercado EURUSD: Tendencia alcista detectada',
-                    '📉 GBPUSD muestra volatilidad aumentada',
-                    '💰 Oportunidad de trading en XAUUSD',
-                    '🌍 Noticia económica afecta divisas'
-                ];
-                const randomActivity = activities[Math.floor(Math.random() * activities.length)];
-                addLog(randomActivity, 'info');
-            }
+        function checkStatus() {
+            fetch('/get_status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.bot_active !== botActive) {
+                    botActive = data.bot_active;
+                    const button = document.getElementById('mainButton');
+                    
+                    if (botActive) {
+                        button.textContent = '🛑 DETENER BOT';
+                        button.className = 'main-button stop';
+                        updateStatus('🟢 BOT ACTIVO - Operando en EURUSD', true);
+                    } else {
+                        button.textContent = '🚀 ACTIVAR BOT AUTO';
+                        button.className = 'main-button';
+                        updateStatus('🔴 BOT INACTIVO', false);
+                    }
+                }
+                
+                updateStats(data);
+            })
+            .catch(error => {
+                console.log('Error checking status:', error);
+            });
         }
 
-        // Actualizar estado cada 3 segundos
-        setInterval(updateStatus, 3000);
+        // Verificar estado cada 2 segundos
+        setInterval(checkStatus, 2000);
         
-        // Simular actividad de mercado cada 10-30 segundos
-        setInterval(simulateMarketActivity, 10000 + Math.random() * 20000);
-        
-        // Actualizar estado inicial
-        updateStatus();
-        
-        // Mensaje de bienvenida
-        setTimeout(() => {
-            addLog('🎯 Bot listo para operar. Conecta a MT5 para comenzar.', 'system');
-        }, 1000);
+        // Verificar estado inicial
+        checkStatus();
     </script>
 </body>
-    </html>
+</html>
