@@ -35,12 +35,17 @@
             border-radius: 10px;
             margin-bottom: 30px;
             border-left: 5px solid #dc3545;
+            transition: all 0.3s ease;
         }
         .status.connected {
             border-left-color: #28a745;
         }
         .status.running {
             border-left-color: #17a2b8;
+        }
+        .status.running.connected {
+            border-left-color: #ffc107;
+            background: #fff3cd;
         }
         .controls {
             display: grid;
@@ -89,20 +94,50 @@
             cursor: not-allowed;
             transform: none;
         }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .profit { color: #28a745; }
+        .loss { color: #dc3545; }
         .logs {
             background: #1a1a1a;
             color: #00ff00;
             padding: 20px;
             border-radius: 8px;
-            height: 250px;
+            height: 300px;
             overflow-y: auto;
             font-family: 'Courier New', monospace;
             font-size: 14px;
             margin-top: 20px;
+            border: 1px solid #333;
         }
         .log-entry {
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             line-height: 1.4;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .log-entry:hover {
+            background: #2a2a2a;
         }
         .timestamp {
             color: #888;
@@ -111,16 +146,75 @@
         .error { color: #ff4444; }
         .warning { color: #ffaa00; }
         .info { color: #4488ff; }
+        .trade { color: #ff88ff; }
+        .system { color: #88ffff; }
+        .symbol-selector {
+            margin-bottom: 20px;
+        }
+        .symbol-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+        }
+        .performance {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .performance h3 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🤖 Bot de Trading MT5</h1>
+        <h1>🤖 Bot de Trading MT5 - SIMULACIÓN</h1>
+        
+        <div class="performance">
+            <h3>🚀 Modo Simulación Activo</h3>
+            <p>Este bot funciona con datos simulados. Perfecto para testing y desarrollo.</p>
+        </div>
+        
+        <div class="symbol-selector">
+            <label for="symbolSelect"><strong>Seleccionar Par de Trading:</strong></label>
+            <select id="symbolSelect" onchange="changeSymbol()">
+                <option value="EURUSD">EUR/USD</option>
+                <option value="GBPUSD">GBP/USD</option>
+                <option value="USDJPY">USD/JPY</option>
+                <option value="XAUUSD">Gold (XAU/USD)</option>
+            </select>
+        </div>
         
         <div id="status" class="status-container status">
-            <strong>Estado:</strong><br>
+            <strong>Estado del Sistema:</strong><br>
             🔴 Desconectado de MT5<br>
             ⏹️ Bot detenido
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="balanceValue">$10,000.00</div>
+                <div class="stat-label">BALANCE</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="profitValue">$0.00</div>
+                <div class="stat-label">GANANCIAS/PÉRDIDAS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="ordersValue">0</div>
+                <div class="stat-label">ÓRDENES ACTIVAS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="symbolValue">EURUSD</div>
+                <div class="stat-label">PAR ACTUAL</div>
+            </div>
         </div>
         
         <div class="controls">
@@ -136,13 +230,18 @@
         </div>
         
         <div class="logs" id="logs">
+            <div class="log-entry system">
+                <span class="timestamp">[Sistema]</span> Aplicación iniciada. Modo simulación activo.
+            </div>
             <div class="log-entry info">
-                <span class="timestamp">[Sistema]</span> Aplicación iniciada. Listo para conectar.
+                <span class="timestamp">[Info]</span> Conecta a MT5 simulado para comenzar.
             </div>
         </div>
     </div>
 
     <script>
+        let currentSymbol = 'EURUSD';
+
         function connectMT5() {
             const btn = document.getElementById('connectBtn');
             btn.disabled = true;
@@ -156,9 +255,10 @@
                 btn.disabled = false;
                 btn.innerHTML = '🔗 Conectar MT5';
                 
-                // Habilitar botón de inicio si conexión exitosa
                 if (data.status === 'success') {
                     document.getElementById('startBtn').disabled = false;
+                    addLog('✅ Conexión establecida con MT5 Simulado', 'success');
+                    addLog('📊 Datos de mercado simulados activos', 'info');
                 }
             })
             .catch(error => {
@@ -181,6 +281,8 @@
                 
                 if (data.status === 'success') {
                     document.getElementById('stopBtn').disabled = false;
+                    addLog('🤖 Estrategia de trading activada', 'success');
+                    addLog('📈 Analizando mercado en tiempo real...', 'info');
                 } else {
                     btn.disabled = false;
                     btn.innerHTML = '▶️ Iniciar Bot';
@@ -205,6 +307,7 @@
                 updateStatus();
                 document.getElementById('startBtn').disabled = false;
                 btn.innerHTML = '⏹️ Detener Bot';
+                addLog('🛑 Estrategia detenida', 'warning');
             })
             .catch(error => {
                 addLog('❌ Error al detener: ' + error, 'error');
@@ -213,30 +316,33 @@
             });
         }
 
+        function changeSymbol() {
+            const select = document.getElementById('symbolSelect');
+            currentSymbol = select.value;
+            document.getElementById('symbolValue').textContent = currentSymbol;
+            addLog(`🔁 Cambiando a par: ${currentSymbol}`, 'info');
+        }
+
         function updateStatus() {
             fetch('/status')
             .then(response => response.json())
             .then(data => {
                 const statusDiv = document.getElementById('status');
-                let statusHTML = `<strong>Estado:</strong><br>`;
+                let statusHTML = `<strong>Estado del Sistema:</strong><br>`;
                 
                 if (data.connected) {
                     statusHTML += `✅ Conectado a MT5 Simulado<br>`;
-                    statusHTML += `💰 Balance: $${data.balance}<br>`;
-                    statusHTML += `📊 Órdenes: ${data.orders_count}<br>`;
+                    statusHTML += `📊 Símbolo: ${data.symbol}<br>`;
+                    statusHTML += `🔄 Órdenes ejecutadas: ${data.orders_count}`;
                 } else {
                     statusHTML += `🔴 Desconectado de MT5<br>`;
-                }
-                if (data.connected) {
-                    statusHTML += `✅ Conectado a MT5<br>`;
-                } else {
-                    statusHTML += `🔴 Desconectado de MT5<br>`;
+                    statusHTML += `💡 Usando datos simulados`;
                 }
                 
                 if (data.running) {
-                    statusHTML += `🟢 Bot ejecutándose`;
+                    statusHTML += `<br>🟢 Bot ejecutándose - Modo Simulación`;
                 } else {
-                    statusHTML += `⏹️ Bot detenido`;
+                    statusHTML += `<br>⏹️ Bot detenido`;
                 }
                 
                 statusDiv.innerHTML = statusHTML;
@@ -245,6 +351,13 @@
                 statusDiv.className = 'status-container status';
                 if (data.connected) statusDiv.classList.add('connected');
                 if (data.running) statusDiv.classList.add('running');
+                
+                // Actualizar estadísticas
+                document.getElementById('balanceValue').textContent = `$${data.balance.toFixed(2)}`;
+                document.getElementById('profitValue').textContent = `$${data.total_profit.toFixed(2)}`;
+                document.getElementById('profitValue').className = `stat-value ${data.total_profit >= 0 ? 'profit' : 'loss'}`;
+                document.getElementById('ordersValue').textContent = data.orders_count;
+                document.getElementById('symbolValue').textContent = data.symbol;
             })
             .catch(error => {
                 console.error('Error actualizando estado:', error);
@@ -255,18 +368,55 @@
             const logs = document.getElementById('logs');
             const timestamp = new Date().toLocaleTimeString();
             const logEntry = document.createElement('div');
-            logEntry.className = `log-entry ${type}`;
+            
+            // Asignar clase según el tipo de mensaje
+            let logClass = 'log-entry ';
+            if (type === 'success') logClass += 'success';
+            else if (type === 'error') logClass += 'error';
+            else if (type === 'warning') logClass += 'warning';
+            else if (type === 'trade') logClass += 'trade';
+            else if (type === 'system') logClass += 'system';
+            else logClass += 'info';
+            
+            logEntry.className = logClass;
             logEntry.innerHTML = `<span class="timestamp">[${timestamp}]</span> ${message}`;
             
             logs.appendChild(logEntry);
             logs.scrollTop = logs.scrollHeight;
+            
+            // Limitar logs a 100 entradas para evitar sobrecarga
+            if (logs.children.length > 100) {
+                logs.removeChild(logs.firstChild);
+            }
+        }
+
+        // Simular actividad del mercado
+        function simulateMarketActivity() {
+            if (Math.random() > 0.7) {
+                const activities = [
+                    '📊 Mercado EURUSD: Tendencia alcista detectada',
+                    '📉 GBPUSD muestra volatilidad aumentada',
+                    '💰 Oportunidad de trading en XAUUSD',
+                    '🌍 Noticia económica afecta divisas'
+                ];
+                const randomActivity = activities[Math.floor(Math.random() * activities.length)];
+                addLog(randomActivity, 'info');
+            }
         }
 
         // Actualizar estado cada 3 segundos
         setInterval(updateStatus, 3000);
         
+        // Simular actividad de mercado cada 10-30 segundos
+        setInterval(simulateMarketActivity, 10000 + Math.random() * 20000);
+        
         // Actualizar estado inicial
         updateStatus();
+        
+        // Mensaje de bienvenida
+        setTimeout(() => {
+            addLog('🎯 Bot listo para operar. Conecta a MT5 para comenzar.', 'system');
+        }, 1000);
     </script>
 </body>
-</html>
+    </html>
