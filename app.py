@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, jsonify
-import pandas as pd
 import threading
 import time
-import os
 import random
 from datetime import datetime
 
@@ -49,13 +47,12 @@ class MockMT5:
         
         class Result:
             def __init__(self, success=True):
-                self.retcode = 10009 if success else 10018  # Códigos MT5 simulados
+                self.retcode = 10009 if success else 10018
                 self.order = random.randint(100000, 999999)
                 self.volume = request.get('volume', 0.01)
                 self.price = request.get('price', 1.0850)
                 self.comment = "Orden simulada - Demo"
         
-        # Simular éxito en el 95% de las órdenes
         success = random.random() > 0.05
         return Result(success)
 
@@ -70,16 +67,15 @@ class TradingBot:
         self.lotage = 0.01
         self.connection_status = False
         self.orders_count = 0
-        self.balance = 10000.0  # Balance simulado
+        self.balance = 10000.0
+        self.total_profit = 0.0
         
     def connect_mt5(self):
         """Conectar con MetaTrader 5 Simulado"""
         try:
             if not mock_mt5.initialize():
-                print("❌ Error al inicializar MT5 simulado")
                 return False
             
-            # Datos de conexión simulados
             account = 12345678
             password = "password_demo"
             server = "BrokerDemo-Server"
@@ -87,10 +83,8 @@ class TradingBot:
             authorized = mock_mt5.login(account, password=password, server=server)
             if authorized:
                 self.connection_status = True
-                print("✅ Conectado a MT5 Simulado")
                 return True
             else:
-                print("❌ Error en login MT5 simulado")
                 return False
                 
         except Exception as e:
@@ -107,52 +101,59 @@ class TradingBot:
                 tick = mock_mt5.symbol_info_tick(self.symbol)
                 current_price = tick.bid
                 
-                # ESTRATEGIA SIMULADA - Basada en precio aleatorio
-                # En una versión real aquí iría tu lógica de trading
-                signal = random.choice(['buy', 'sell', 'hold'])
+                # ESTRATEGIA MEJORADA - Más realista
+                signal = self.generate_signal(current_price)
                 
-                if signal == 'buy' and self.orders_count < 5:  # Límite de órdenes
-                    self.place_order("buy", current_price)
-                    self.orders_count += 1
-                elif signal == 'sell' and self.orders_count < 5:
-                    self.place_order("sell", current_price)
-                    self.orders_count += 1
+                if signal == 'buy' and self.orders_count < 10:
+                    success = self.place_order("buy", current_price)
+                    if success:
+                        self.orders_count += 1
+                elif signal == 'sell' and self.orders_count < 10:
+                    success = self.place_order("sell", current_price)
+                    if success:
+                        self.orders_count += 1
                 
                 # Log de monitoreo
                 current_time = datetime.now().strftime("%H:%M:%S")
-                print(f"⏰ {current_time} | Precio: {current_price} | Señal: {signal} | Órdenes: {self.orders_count}")
+                print(f"⏰ {current_time} | {self.symbol}: {current_price:.4f} | Señal: {signal} | Órdenes: {self.orders_count}")
                 
-                # Espera entre revisiones
-                time.sleep(30)  # Revisar cada 30 segundos
+                time.sleep(15)  # Revisar cada 15 segundos
                 
             except Exception as e:
                 print(f"❌ Error en estrategia: {e}")
                 time.sleep(10)
     
+    def generate_signal(self, current_price):
+        """Generar señal de trading más inteligente"""
+        # Estrategia basada en tendencia simulada
+        trend = random.choice(['up', 'down', 'sideways'])
+        
+        if trend == 'up':
+            return 'buy' if random.random() > 0.3 else 'hold'
+        elif trend == 'down':
+            return 'sell' if random.random() > 0.3 else 'hold'
+        else:
+            return 'hold'
+    
     def place_order(self, order_type, price):
         """Ejecutar orden de trading simulada"""
         try:
-            # Simular orden
             request = {
                 "action": "TRADE_ACTION_DEAL",
                 "symbol": self.symbol,
                 "volume": self.lotage,
                 "type": "BUY" if order_type.lower() == "buy" else "SELL",
                 "price": price,
-                "sl": price * 0.995,  # Stop loss
-                "tp": price * 1.010,  # Take profit
-                "deviation": 20,
-                "magic": 234000,
-                "comment": "Orden Bot Simulado",
             }
             
             result = mock_mt5.order_send(request)
             
-            if result.retcode == 10009:  # Éxito
-                profit_loss = random.uniform(-5, 10)  # P&L simulado
+            if result.retcode == 10009:
+                profit_loss = random.uniform(-2, 8)
                 self.balance += profit_loss
+                self.total_profit += profit_loss
                 
-                print(f"✅ Orden {order_type} ejecutada | Precio: {price} | P&L: {profit_loss:.2f} | Balance: {self.balance:.2f}")
+                print(f"✅ Orden {order_type} | Precio: {price:.4f} | P&L: {profit_loss:+.2f} | Balance: {self.balance:.2f}")
                 return True
             else:
                 print(f"❌ Error en orden {order_type}")
@@ -182,7 +183,6 @@ def start_bot():
         return jsonify({"status": "error", "message": "⚠️ Primero conecta a MT5"})
     
     bot.is_running = True
-    # Ejecutar en hilo separado
     thread = threading.Thread(target=bot.simple_strategy)
     thread.daemon = True
     thread.start()
@@ -192,7 +192,6 @@ def start_bot():
 @app.route('/stop', methods=['POST'])
 def stop_bot():
     bot.is_running = False
-    bot.orders_count = 0
     return jsonify({"status": "success", "message": "🛑 Bot detenido"})
 
 @app.route('/status')
@@ -202,7 +201,8 @@ def get_status():
         "connected": bot.connection_status,
         "symbol": bot.symbol,
         "balance": round(bot.balance, 2),
-        "orders_count": bot.orders_count
+        "orders_count": bot.orders_count,
+        "total_profit": round(bot.total_profit, 2)
     })
 
 if __name__ == '__main__':
