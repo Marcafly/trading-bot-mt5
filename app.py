@@ -7,43 +7,33 @@ import os
 
 app = Flask(__name__)
 
-# Estado global simple
-bot_state = {
-    'running': False,
-    'balance': 10000.0,
-    'profit': 0.0,
-    'orders': 0,
-    'symbol': 'EURUSD'
-}
+# Estado global - MUY SIMPLE
+bot_active = False
+balance = 10000.0
+total_profit = 0.0
+orders_count = 0
 
-def bot_worker():
-    """Trabajador del bot - MUY SIMPLE"""
-    while bot_state['running']:
+def trading_bot_worker():
+    """Trabajador del bot - SUPER SIMPLE"""
+    global bot_active, balance, total_profit, orders_count
+    
+    print("🤖 BOT INICIADO - Trabajando...")
+    
+    while bot_active:
         try:
-            # Simular operación de trading
-            if bot_state['orders'] < 20:  # Límite de órdenes
-                # Precio simulado
-                price = 1.0850 + random.uniform(-0.010, 0.010)
-                price = round(price, 4)
-                
-                # Decisión simple: 50% compra, 50% venta
-                if random.choice([True, False]):
-                    operation = "COMPRA"
-                    profit = random.uniform(1, 15)  # Más ganancias que pérdidas
-                else:
-                    operation = "VENTA" 
-                    profit = random.uniform(-10, 5)  # Puede ganar o perder
-                
-                # Actualizar estado
-                bot_state['balance'] += profit
-                bot_state['profit'] += profit
-                bot_state['orders'] += 1
-                
-                # Log en servidor
-                print(f"✅ {datetime.now().strftime('%H:%M:%S')} | {operation} | EURUSD {price} | Ganancia: {profit:+.2f}")
+            # Simular una operación de trading
+            profit = random.uniform(-8, 12)  # Puede ganar o perder
+            balance += profit
+            total_profit += profit
+            orders_count += 1
             
-            # Esperar 5-10 segundos
-            time.sleep(random.uniform(5, 10))
+            # Log en el servidor
+            current_time = datetime.now().strftime("%H:%M:%S")
+            operation = "COMPRA" if profit > 0 else "VENTA"
+            print(f"✅ {current_time} | {operation} | Ganancia: {profit:+.2f} | Balance: {balance:.2f}")
+            
+            # Esperar entre 3-8 segundos
+            time.sleep(random.uniform(3, 8))
             
         except Exception as e:
             print(f"❌ Error en bot: {e}")
@@ -55,56 +45,58 @@ def home():
 
 @app.route('/toggle_bot', methods=['POST'])
 def toggle_bot():
-    """Un solo endpoint para iniciar/detener"""
+    """ÚNICO endpoint - Activa/desactiva TODO"""
+    global bot_active
+    
     try:
-        if not bot_state['running']:
-            # INICIAR BOT
-            bot_state['running'] = True
-            bot_state['orders'] = 0  # Resetear contador
+        if not bot_active:
+            # ACTIVAR BOT (conecta e inicia automáticamente)
+            bot_active = True
             
-            # Iniciar en hilo separado
-            thread = threading.Thread(target=bot_worker)
+            # Iniciar el bot en un hilo separado
+            thread = threading.Thread(target=trading_bot_worker)
             thread.daemon = True
             thread.start()
             
-            print("🚀 BOT INICIADO - Operando automáticamente")
+            print("🚀 BOT ACTIVADO - Conectado e iniciado automáticamente")
+            
             return jsonify({
-                'status': 'success',
+                'success': True,
                 'message': '🚀 BOT ACTIVADO - Operando en EURUSD',
-                'running': True,
-                'balance': round(bot_state['balance'], 2),
-                'profit': round(bot_state['profit'], 2),
-                'orders': bot_state['orders']
+                'bot_active': True,
+                'balance': round(balance, 2),
+                'profit': round(total_profit, 2),
+                'orders': orders_count
             })
         else:
-            # DETENER BOT
-            bot_state['running'] = False
-            print("🛑 BOT DETENIDO")
+            # DESACTIVAR BOT
+            bot_active = False
+            print("🛑 BOT DESACTIVADO")
+            
             return jsonify({
-                'status': 'success', 
-                'message': '🛑 BOT DETENIDO',
-                'running': False,
-                'balance': round(bot_state['balance'], 2),
-                'profit': round(bot_state['profit'], 2),
-                'orders': bot_state['orders']
+                'success': True,
+                'message': '🛑 BOT DESACTIVADO',
+                'bot_active': False,
+                'balance': round(balance, 2),
+                'profit': round(total_profit, 2),
+                'orders': orders_count
             })
             
     except Exception as e:
-        print(f"❌ Error crítico: {e}")
+        print(f"❌ Error: {e}")
         return jsonify({
-            'status': 'error',
-            'message': f'❌ Error: {str(e)}'
+            'success': False,
+            'message': f'Error: {str(e)}'
         })
 
-@app.route('/get_state')
-def get_state():
-    """Obtener estado actual - MUY SIMPLE"""
+@app.route('/get_status')
+def get_status():
+    """Obtener estado actual"""
     return jsonify({
-        'running': bot_state['running'],
-        'balance': round(bot_state['balance'], 2),
-        'profit': round(bot_state['profit'], 2),
-        'orders': bot_state['orders'],
-        'symbol': bot_state['symbol']
+        'bot_active': bot_active,
+        'balance': round(balance, 2),
+        'profit': round(total_profit, 2),
+        'orders': orders_count
     })
 
 if __name__ == '__main__':
