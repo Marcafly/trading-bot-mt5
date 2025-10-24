@@ -221,6 +221,13 @@
                 let statusHTML = `<strong>Estado:</strong><br>`;
                 
                 if (data.connected) {
+                    statusHTML += `✅ Conectado a MT5 Simulado<br>`;
+                    statusHTML += `💰 Balance: $${data.balance}<br>`;
+                    statusHTML += `📊 Órdenes: ${data.orders_count}<br>`;
+                } else {
+                    statusHTML += `🔴 Desconectado de MT5<br>`;
+                }
+                if (data.connected) {
                     statusHTML += `✅ Conectado a MT5<br>`;
                 } else {
                     statusHTML += `🔴 Desconectado de MT5<br>`;
